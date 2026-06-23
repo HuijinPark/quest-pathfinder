@@ -1,0 +1,6 @@
+# personal save data — never publish
+*.json
+# internal notes / tooling
+STATUS.md
+.claude/
+.DS_Store
