@@ -721,7 +721,7 @@
   // Dropbox sync — App key is a PUBLIC client id (OAuth PKCE, no secret); tokens kept in localStorage("qpf_dbx")
   const DROPBOX_APP_KEY="0pyhkxelaxwcog6";
   const DBX_REDIRECT=location.origin+location.pathname;
-  let dbxUpTimer=null;
+  let dbxUpTimer=null, dbxSyncing=false, dbxPollTimer=null;
 
   function rollover(){
     if(S.lastDay!==today()){
@@ -924,31 +924,33 @@
     if(dbxLinked()){ btn.textContent="연결 끊기"; st.textContent=msg||"✓ 연결됨"; st.className=(msg?"":"sync-on"); }
     else { btn.textContent="연동"; st.textContent="꺼짐"; st.className=""; }
   }
-  async function dbxSync(forceAdopt){
-    if(!dbxLinked()) return;
-    dbxUI("동기화 중…");
-    const remote=await dbxDownload();
-    const valid = remote && typeof remote.level==="number" && Array.isArray(remote.monsters);
-    let adopt=false;
-    if(valid){
-      if(forceAdopt){
-        // first connect: whoever has more 처치(progress) wins → an empty device never clobbers real data
-        const lk=S.totalKills||0, rk=remote.totalKills||0;
-        if(rk!==lk) adopt=(rk>lk);
-        else if(JSON.stringify(remote)===JSON.stringify(S)) adopt=true;
-        else adopt=(S.level<=1 && lk===0);   // tie: take cloud only if local is fresh-empty, else keep local & push
-      } else {
-        adopt = (remote._t||0) > (S._t||0);
+  async function dbxSync(forceAdopt, quiet){
+    if(!dbxLinked() || dbxSyncing) return;
+    dbxSyncing=true;
+    if(!quiet) dbxUI("동기화 중…");
+    try{
+      const remote=await dbxDownload();
+      const valid = remote && typeof remote.level==="number" && Array.isArray(remote.monsters);
+      let adopt=false;
+      if(valid){
+        if(forceAdopt){
+          // first connect: whoever has more 처치(progress) wins → an empty device never clobbers real data
+          const lk=S.totalKills||0, rk=remote.totalKills||0;
+          if(rk!==lk) adopt=(rk>lk);
+          else if(JSON.stringify(remote)===JSON.stringify(S)) adopt=true;
+          else adopt=(S.level<=1 && lk===0);
+        } else {
+          adopt = (remote._t||0) > (S._t||0);   // remote newer → pull it in
+        }
       }
-    }
-    if(adopt){
-      S=normalize(remote); undoStack=[]; editingId=null; hideUndo(); rollover();
-      try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){}
-      render();
-    } else {
-      await dbxUpload();   // seed/refresh the cloud copy with local
-    }
-    dbxUI();
+      if(adopt){
+        S=normalize(remote); undoStack=[]; editingId=null; hideUndo(); rollover();
+        try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){}
+        render();
+      } else if(!valid || (S._t||0) > (remote._t||0)){
+        await dbxUpload();   // local strictly newer (or no cloud copy yet) → push
+      }
+    } finally { dbxSyncing=false; if(!quiet) dbxUI(); }
   }
   async function dbxBtnClick(){
     ensureAudio();
@@ -962,6 +964,11 @@
     const authed=await dbxHandleRedirect();
     dbxUI();
     if(dbxLinked()){ await dbxSync(authed); if(authed) alert("Dropbox 연동 완료! 이 기기 진행도가 자동 동기화됩니다."); }
+    // keep devices in sync without a manual refresh: pull on focus/visibility + light poll (~25s) while visible
+    const pull=()=>{ if(dbxLinked() && !document.hidden) dbxSync(false, true); };
+    document.addEventListener("visibilitychange", pull);
+    window.addEventListener("focus", pull);
+    clearInterval(dbxPollTimer); dbxPollTimer=setInterval(pull, 25000);
   }
 
   let curType="research", curTier=1, pending=null, editingId=null;
