@@ -932,9 +932,11 @@
     let adopt=false;
     if(valid){
       if(forceAdopt){
-        const localProg=(S.totalKills>0)||(S.level>1);
-        const same=JSON.stringify(remote)===JSON.stringify(S);
-        adopt = (!localProg) || same || confirm("Dropbox에 저장된 진행도(Lv "+remote.level+")가 있어요.\n클라우드 걸 불러올까요?\n(취소하면 이 기기 진행도를 클라우드에 올립니다)");
+        // first connect: whoever has more 처치(progress) wins → an empty device never clobbers real data
+        const lk=S.totalKills||0, rk=remote.totalKills||0;
+        if(rk!==lk) adopt=(rk>lk);
+        else if(JSON.stringify(remote)===JSON.stringify(S)) adopt=true;
+        else adopt=(S.level<=1 && lk===0);   // tie: take cloud only if local is fresh-empty, else keep local & push
       } else {
         adopt = (remote._t||0) > (S._t||0);
       }
