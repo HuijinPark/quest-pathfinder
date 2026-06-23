@@ -570,6 +570,7 @@
     진행상황은 이 브라우저에 저장돼요 · <a id="resetBtn">하루 리셋</a><br>
     백업 파일: <a id="exportBtn">내보내기</a> · <a id="importBtn">불러오기</a><input type="file" id="importFile" accept="application/json,.json" hidden><br>
     파일 자동저장 <span id="syncStatus"></span> <a id="syncBtn">켜기</a><br>
+    Dropbox 동기화 <span id="dbxStatus"></span> <a id="dbxBtn">연동</a><br>
     작게 쪼개서 한 마리씩. 다 잡으려 하지 말고 오늘 세 마리면 충분.
   </div>
 </div>
@@ -711,12 +712,16 @@
     try{ saved = JSON.parse(localStorage.getItem(STORE_KEY))||{}; }catch(e){}
     return normalize(saved);
   }
-  function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} if(fileHandle) writeFile(); }
+  function save(){ S._t=Date.now(); try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} if(fileHandle) writeFile(); if(dbxLinked()) dbxUploadDebounced(); }
   function today(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
   function uid(){ return "L"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
   // file auto-sync state (File System Access API — desktop Chrome/Edge only)
   const FSA_OK=("showSaveFilePicker" in window);
   let fileHandle=null, savedHandle=null, fileBusy=false, filePend=false;
+  // Dropbox sync — App key is a PUBLIC client id (OAuth PKCE, no secret); tokens kept in localStorage("qpf_dbx")
+  const DROPBOX_APP_KEY="0pyhkxelaxwcog6";
+  const DBX_REDIRECT=location.origin+location.pathname;
+  let dbxUpTimer=null;
 
   function rollover(){
     if(S.lastDay!==today()){
@@ -834,6 +839,127 @@
       catch(e){ savedHandle=h; }
     }
     syncStatus();
+  }
+
+  // ---- DROPBOX SYNC (OAuth PKCE; auto up/download to the app-folder save.json across devices) ----
+  function dbxTokens(){ try{ return JSON.parse(localStorage.getItem("qpf_dbx")); }catch(e){ return null; } }
+  function dbxLinked(){ const t=dbxTokens(); return !!(t && t.refresh_token); }
+  function dbxSaveTokens(j){
+    const cur=dbxTokens()||{};
+    const t={ access_token:j.access_token, refresh_token:j.refresh_token||cur.refresh_token,
+      expires_at: Date.now()+((j.expires_in?j.expires_in:14400)*1000)-60000 };
+    try{ localStorage.setItem("qpf_dbx", JSON.stringify(t)); }catch(e){}
+  }
+  function b64url(buf){
+    let s=""; const b=new Uint8Array(buf); for(let i=0;i<b.length;i++) s+=String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  }
+  async function dbxPkce(){
+    const v=b64url(crypto.getRandomValues(new Uint8Array(64)).buffer).slice(0,120);
+    const h=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+    return {v, c:b64url(h)};
+  }
+  async function dbxConnect(){
+    const {v,c}=await dbxPkce();
+    try{ localStorage.setItem("qpf_dbx_pkce", v); }catch(e){}
+    const p=new URLSearchParams({client_id:DROPBOX_APP_KEY,response_type:"code",
+      code_challenge:c,code_challenge_method:"S256",redirect_uri:DBX_REDIRECT,
+      token_access_type:"offline",scope:"account_info.read files.content.read files.content.write"});
+    location.href="https://www.dropbox.com/oauth2/authorize?"+p.toString();
+  }
+  async function dbxHandleRedirect(){
+    const u=new URL(location.href);
+    const code=u.searchParams.get("code");
+    if(!code) return false;
+    const v=localStorage.getItem("qpf_dbx_pkce");
+    u.searchParams.delete("code"); u.searchParams.delete("state");
+    history.replaceState({}, "", u.pathname+(u.search||"")+u.hash);   // strip ?code from the URL
+    if(!v) return false;
+    localStorage.removeItem("qpf_dbx_pkce");
+    try{
+      const body=new URLSearchParams({code,grant_type:"authorization_code",client_id:DROPBOX_APP_KEY,
+        code_verifier:v,redirect_uri:DBX_REDIRECT});
+      const r=await fetch("https://api.dropboxapi.com/oauth2/token",{method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()});
+      const j=await r.json();
+      if(j.access_token){ dbxSaveTokens(j); return true; }
+    }catch(e){}
+    return false;
+  }
+  async function dbxToken(){
+    const t=dbxTokens(); if(!t||!t.refresh_token) return null;
+    if(t.access_token && Date.now()<t.expires_at) return t.access_token;
+    try{
+      const body=new URLSearchParams({grant_type:"refresh_token",refresh_token:t.refresh_token,client_id:DROPBOX_APP_KEY});
+      const r=await fetch("https://api.dropboxapi.com/oauth2/token",{method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},body:body.toString()});
+      const j=await r.json();
+      if(j.access_token){ dbxSaveTokens(j); return j.access_token; }
+    }catch(e){}
+    return null;
+  }
+  async function dbxUpload(){
+    const tok=await dbxToken(); if(!tok) return false;
+    try{
+      const r=await fetch("https://content.dropboxapi.com/2/files/upload",{method:"POST",
+        headers:{"Authorization":"Bearer "+tok,
+          "Dropbox-API-Arg":JSON.stringify({path:"/save.json",mode:"overwrite",mute:true}),
+          "Content-Type":"application/octet-stream"},
+        body:JSON.stringify(S)});
+      return r.ok;
+    }catch(e){ return false; }
+  }
+  async function dbxDownload(){
+    const tok=await dbxToken(); if(!tok) return null;
+    try{
+      const r=await fetch("https://content.dropboxapi.com/2/files/download",{method:"POST",
+        headers:{"Authorization":"Bearer "+tok,"Dropbox-API-Arg":JSON.stringify({path:"/save.json"})}});
+      if(!r.ok) return null;   // 409 = file not there yet
+      return JSON.parse(await r.text());
+    }catch(e){ return null; }
+  }
+  function dbxUploadDebounced(){ clearTimeout(dbxUpTimer); dbxUpTimer=setTimeout(()=>{ dbxUpload(); },1500); }
+  function dbxUI(msg){
+    const st=$("dbxStatus"), btn=$("dbxBtn"); if(!btn) return;
+    if(dbxLinked()){ btn.textContent="연결 끊기"; st.textContent=msg||"✓ 연결됨"; st.className=(msg?"":"sync-on"); }
+    else { btn.textContent="연동"; st.textContent="꺼짐"; st.className=""; }
+  }
+  async function dbxSync(forceAdopt){
+    if(!dbxLinked()) return;
+    dbxUI("동기화 중…");
+    const remote=await dbxDownload();
+    const valid = remote && typeof remote.level==="number" && Array.isArray(remote.monsters);
+    let adopt=false;
+    if(valid){
+      if(forceAdopt){
+        const localProg=(S.totalKills>0)||(S.level>1);
+        const same=JSON.stringify(remote)===JSON.stringify(S);
+        adopt = (!localProg) || same || confirm("Dropbox에 저장된 진행도(Lv "+remote.level+")가 있어요.\n클라우드 걸 불러올까요?\n(취소하면 이 기기 진행도를 클라우드에 올립니다)");
+      } else {
+        adopt = (remote._t||0) > (S._t||0);
+      }
+    }
+    if(adopt){
+      S=normalize(remote); undoStack=[]; editingId=null; hideUndo(); rollover();
+      try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){}
+      render();
+    } else {
+      await dbxUpload();   // seed/refresh the cloud copy with local
+    }
+    dbxUI();
+  }
+  async function dbxBtnClick(){
+    ensureAudio();
+    if(dbxLinked()){
+      if(confirm("Dropbox 연동을 끊을까요? (이 기기에서만; 데이터는 남아요)")){ localStorage.removeItem("qpf_dbx"); SND.del(); dbxUI(); }
+      return;
+    }
+    dbxConnect();   // redirects to the Dropbox login/authorize page
+  }
+  async function initDbx(){
+    const authed=await dbxHandleRedirect();
+    dbxUI();
+    if(dbxLinked()){ await dbxSync(authed); if(authed) alert("Dropbox 연동 완료! 이 기기 진행도가 자동 동기화됩니다."); }
   }
 
   let curType="research", curTier=1, pending=null, editingId=null;
@@ -1443,6 +1569,7 @@
   $("importBtn").addEventListener("click",()=>$("importFile").click());
   $("importFile").addEventListener("change",e=>{ const f=e.target.files[0]; importSave(f); e.target.value=""; });
   $("syncBtn").addEventListener("click",syncBtnClick);
+  $("dbxBtn").addEventListener("click",dbxBtnClick);
   $("shopAddToggle").addEventListener("click",()=>{
     const f=$("shopAddForm"); const open=f.classList.toggle("open");
     $("shopAddToggle").textContent=open?"× 닫기":"＋ 내 보상 직접 추가";
@@ -1496,7 +1623,7 @@
     ];
     save();
   }
-  updateTierHint(); render(); initFileSync();
+  updateTierHint(); render(); initFileSync(); initDbx();
 })();
 </script>
 </body>
