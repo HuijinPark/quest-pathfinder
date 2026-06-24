@@ -563,7 +563,7 @@
 
   <!-- GATHER VIEW -->
   <div class="view" id="gatherView">
-    <div class="gather-intro">🌾 자잘한 좋은 행동을 하나 했으면 톡 누르세요. 한국어 쇼츠 대신 영어 영상, 논문 한 문단 — 뭐든 <b>+4 XP & 골드 0.5~1.5(랜덤)</b>. 무엇이 나올진 뽑기 운!</div>
+    <div class="gather-intro">🌾 자잘한 좋은 행동을 하나 했으면 톡 누르세요. 한국어 쇼츠 대신 영어 영상, 논문 한 문단 — 뭐든 <b>+4 XP & 골드 1.5~2.5(랜덤)</b>. 무엇이 나올진 뽑기 운!</div>
     <div class="g-stats">
       <div class="gs today"><div class="n" id="gToday">0</div><div class="l">오늘 채집</div></div>
       <div class="gs total"><div class="n" id="gTotal">0</div><div class="l">총 채집</div></div>
@@ -667,9 +667,9 @@
 
   const TIER = {0:{xp:8,gold:2,label:"XS"},1:{xp:20,gold:5,label:"S"},2:{xp:50,gold:14,label:"M"},3:{xp:110,gold:35,label:"L"}};
   // ---- GATHER (채집): repeatable micro-actions, FLAT reward, rarity is cosmetic only ----
-  const GATHER_REWARD={gold:1,xp:4};   // xp fixed; gold is now Gaussian — see gatherGold()
+  const GATHER_REWARD={gold:2,xp:4};   // xp fixed (+4); gold is Gaussian via gatherGold() — this is just the nominal mean
   function gaussian(mean,sd){ const u=1-Math.random(), v=Math.random(); return mean+sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
-  function gatherGold(){ let g=gaussian(1.0,0.25); if(g<0.5)g=0.5; if(g>1.5)g=1.5; return Math.round(g*10)/10; } // 0.5~1.5, μ1.0, 0.1 step (~±2σ clamp)
+  function gatherGold(){ let g=gaussian(2.0,0.25); if(g<1.5)g=1.5; if(g>2.5)g=2.5; return Math.round(g*10)/10; } // 1.5~2.5, μ2.0, σ0.25 bell, 0.1 step
   function fmtGold(v){ const r=Math.round(v*10)/10; return Number.isInteger(r)?(""+r):r.toFixed(1); }
   const RARITY=[
     {key:"common",p:0.70,icons:["🌿","🍄","🌰","🪵","🌾","🪻"]},
@@ -1647,7 +1647,7 @@
       }
       row.innerHTML=`<div class="g-node-ico">🌾</div>
         <div class="g-node-body"><div class="g-node-name">${escapeHtml(n.label)}</div>
-        <div class="g-node-sub"><b>+${GATHER_REWARD.xp} XP</b> · 🪙 0.5~1.5 · 무엇이 나올진 운!</div></div>
+        <div class="g-node-sub"><b>+${GATHER_REWARD.xp} XP</b> · 🪙 1.5~2.5 · 무엇이 나올진 운!</div></div>
         <button class="g-btn">채집</button>
         <span class="edit-x" title="이름 수정">✎</span><span class="del-x" title="목록에서 빼기">✕</span>`;
       row.querySelector(".g-btn").addEventListener("click",ev=>{ ev.stopPropagation(); gather(n.id,ev); });
@@ -1663,19 +1663,28 @@
     const rarity=rollRarity();
     const icon=rarity.icons[Math.floor(Math.random()*rarity.icons.length)];
     const day=dayKey(new Date());
-    const goldGain=gatherGold();                          // Gaussian 0.5~1.5
+    const goldGain=gatherGold();                          // Gaussian 1.5~2.5 (μ2.0)
     S.gold=Math.round((S.gold+goldGain)*10)/10;
     const gd=S.gatherDays[day]||(S.gatherDays[day]={n:0,gold:0});
     gd.n+=1; gd.gold=Math.round((gd.gold+goldGain)*10)/10;
     S.gatherTotal+=1;
     const isEpic=rarity.key==="epic", isRare=rarity.key==="rare";
-    if(isEpic){ SND.gatherEpic(); shakeScreen(true); }
-    else if(isRare){ SND.gatherRare(); }
-    else SND.gather();
     const rect=ev.currentTarget.getBoundingClientRect();
     const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
     const nm=RES_NAME[icon]||"자원";
-    floatText(cx,cy-10,icon+" "+nm+(isEpic?" 대발견!":" 발견!"),isEpic?"crit":(isRare?"reward":"xp"));
+    if(isEpic){            // 5% — full spectacle
+      SND.gatherEpic(); shakeScreen(true); goldRays(8);
+      burst(cx,cy,[icon,"✨","🌟","💫","🎉"],24,260);
+      floatText(cx,cy-14,icon+" "+nm+" 대발견!","crit big");
+    } else if(isRare){     // 25% — medium pop + light shake
+      SND.gatherRare(); shakeScreen(false);
+      burst(cx,cy,[icon,"✨","💫"],13,175);
+      floatText(cx,cy-12,icon+" "+nm+" 발견!","reward");
+    } else {               // 70% — light (clicked a lot; avoid fatigue)
+      SND.gather();
+      burst(cx,cy,[icon,"✨"],6,105);
+      floatText(cx,cy-10,icon+" "+nm+" 발견!","xp");
+    }
     setTimeout(()=>floatText(cx-16,cy+8,"+"+fmtGold(goldGain)+"🪙","gold"),100);
     setTimeout(()=>floatText(cx+16,cy+8,"+"+GATHER_REWARD.xp+" XP","xp"),180);
     bumpGold();
@@ -1894,8 +1903,9 @@
   }
   function updateTierHint(){
     const base=TIER[curTier];
-    const xp=curType==="boss"?Math.round(base.xp*BOSS_MULT):base.xp;
-    $("tierHint").textContent="+"+xp+" XP";
+    const mult=curType==="boss"?BOSS_MULT:1;
+    const xp=Math.round(base.xp*mult), gold=Math.round(base.gold*mult);
+    $("tierHint").innerHTML="+"+xp+' XP · <span style="color:var(--gold)">'+gold+"🪙</span>";
   }
 
   // ---- ADD REWARD ----
