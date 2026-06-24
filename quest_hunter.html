@@ -1390,7 +1390,7 @@
         row.className="shop-item"+(buyable?"":" locked");
         const sub=`${CAT_LABEL[cat]} · ${r.price}🪙`+(r.dailyGold?` · 하루 ${r.dailyGold}🪙 모으면 열림`:``);
         let btnInner;
-        if(dailyLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${tgold}/${r.dailyGold}🪙</span>`;
+        if(dailyLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(tgold)}/${r.dailyGold}🪙</span>`;
         else if(!afford) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(need)} 더</span>`;
         else btnInner=`<span class="bprice">${r.price}🪙</span><span class="blabel">구매</span>`;
         row.innerHTML=`
@@ -1434,10 +1434,7 @@
   function dayKey(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
   function dayKeyTs(ts){ return dayKey(new Date(ts)); }
   // gold EARNED today, derived from the kill log (single source of truth; auto-correct on undo / midnight / pre-existing kills)
-  function todayGoldEarned(){
-    const tk=dayKey(new Date());
-    return S.log.reduce((s,e)=>(e.kind==="kill" && dayKeyTs(e.t)===tk)?s+(e.gold||0):s,0);
-  }
+  function todayGoldEarned(){ return todayEarned().gold; }   // kills + gathers today (matches header "오늘의 수확")
   function timeOf(ts){ const d=new Date(ts); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
   function dayLabel(date){
     const t0=startOfDay(new Date()).getTime();
