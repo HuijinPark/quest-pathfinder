@@ -92,6 +92,11 @@
   .stat .lbl{font-size:10px;color:var(--ink-dim);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
   .stat.gold .num{color:var(--gold)} .stat.streak .num{color:var(--crit)} .stat.slain .num{color:var(--slay)}
   .stat.gold.bump{animation:pop .4s}
+  .today-haul{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:11px;
+    font-size:12px;color:var(--ink-dim);letter-spacing:.02em;flex-wrap:wrap}
+  .today-haul .th-l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.75}
+  .today-haul b{font-variant-numeric:tabular-nums}
+  .today-haul .th-xp{color:var(--xp)} .today-haul .th-gold{color:var(--gold)}
 
   /* ===== TABS ===== */
   .tabs{display:flex;gap:8px;margin:18px 0 6px;background:var(--panel);border:1px solid var(--edge);border-radius:13px;padding:5px}
@@ -283,6 +288,38 @@
     cursor:pointer;font-family:inherit;opacity:.3;transition:opacity .15s,color .15s,border-color .15s}
   .log-entry:hover .le-undo{opacity:1}
   .le-undo:hover{color:var(--slay);border-color:var(--slay)}
+  .log-entry.gather{opacity:.85} .log-entry.gather .le-rw{color:var(--routine)}
+  /* ===== GATHER ===== */
+  .gather-intro{font-size:12.5px;color:var(--ink-dim);line-height:1.6;margin:14px 4px 6px}
+  .gather-intro b{color:var(--xp)}
+  .g-stats{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+  .g-stats .gs{flex:1;min-width:84px;background:var(--panel);border:1px solid var(--edge);border-radius:12px;padding:10px 8px;text-align:center}
+  .g-stats .gs .n{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+  .g-stats .gs .l{font-size:10px;color:var(--ink-dim);letter-spacing:.04em;margin-top:3px}
+  .g-stats .gs.today .n{color:var(--xp)} .g-stats .gs.total .n{color:var(--gold)}
+  .g-stats .gs.days .n{color:var(--slay)} .g-stats .gs.cur .n{color:var(--crit)} .g-stats .gs.best .n{color:var(--routine)}
+  .g-node{position:relative;background:linear-gradient(100deg,var(--panel-2),var(--panel));
+    border:1px solid var(--edge);border-left:4px solid var(--routine);border-radius:13px;
+    padding:12px 12px 12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px}
+  .g-node-ico{width:42px;height:42px;flex-shrink:0;border-radius:11px;background:var(--void);
+    border:1px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:22px}
+  .g-node-body{flex:1;min-width:0}
+  .g-node-name{font-size:15px;font-weight:600;line-height:1.3;word-break:break-word}
+  .g-node-sub{font-size:11px;color:var(--ink-dim);margin-top:3px} .g-node-sub b{color:var(--xp)}
+  .g-node .gname-input{width:100%;background:var(--void);border:1px solid var(--gold-deep);border-radius:8px;
+    padding:7px 9px;color:var(--ink);font-size:14px;font-family:inherit}
+  .g-node .gname-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,200,75,.15)}
+  .g-btn{flex-shrink:0;border:1px solid var(--routine);border-radius:10px;cursor:pointer;
+    background:linear-gradient(180deg,#b59bff,var(--routine));color:#16102b;font-weight:800;
+    font-size:14px;font-family:inherit;padding:10px 18px;white-space:nowrap;transition:transform .1s}
+  .g-btn:active{transform:scale(.86)}
+  .g-node:hover .edit-x,.g-node:hover .del-x{opacity:1}
+  .g-node.slip{border-left-color:var(--hp)}
+  .log-entry.theft{opacity:.85} .log-entry.theft .le-rw{color:var(--hp)}
+  .s-btn{flex-shrink:0;border:1px solid var(--hp);border-radius:10px;cursor:pointer;
+    background:linear-gradient(180deg,#e87a96,var(--hp));color:#2a0d16;font-weight:800;
+    font-size:14px;font-family:inherit;padding:10px 16px;white-space:nowrap;transition:transform .1s}
+  .s-btn:active{transform:scale(.86)}
 
   /* ===== FX ===== */
   #fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
@@ -290,6 +327,13 @@
     white-space:nowrap;animation:floatUp 1.1s cubic-bezier(.2,.6,.3,1) forwards}
   .float.xp{color:var(--xp)} .float.gold{color:var(--gold)} .float.crit{color:var(--crit);font-size:38px}
   .float.spend{color:var(--hp)} .float.reward{color:var(--gold);font-size:30px}
+  .float.big{font-size:46px}
+  .burst-bit{position:absolute;transform:translate(-50%,-50%);text-shadow:0 2px 8px rgba(0,0,0,.7);
+    pointer-events:none;will-change:transform,opacity;animation:burstOut 1s cubic-bezier(.15,.7,.3,1) forwards}
+  @keyframes burstOut{
+    0%{transform:translate(-50%,-50%) scale(.2);opacity:0}
+    15%{opacity:1}
+    100%{transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,0px))) scale(.85) rotate(var(--rot,0deg));opacity:0}}
   @keyframes floatUp{0%{transform:translate(-50%,0) scale(.5);opacity:0}
     15%{transform:translate(-50%,-12px) scale(1.25);opacity:1} 30%{transform:translate(-50%,-22px) scale(1)}
     100%{transform:translate(-50%,-90px) scale(.9);opacity:0}}
@@ -355,7 +399,7 @@
 <div id="levelup"><div class="lu-big">LEVEL UP</div><div class="lu-sub" id="luSub">Lv 2</div><div class="lu-title" id="luTitle"></div></div>
 
 <div class="undo-bar" id="undoBar">
-  <span class="ub-text">🗡️ <b id="undoName"></b> 처치 완료</span>
+  <span class="ub-text" id="undoMsg"></span>
   <button class="ub-btn" id="undoBtn">되돌리기</button>
 </div>
 
@@ -472,10 +516,16 @@
       <div class="stat streak"><div class="ico">🔥</div><div class="num" id="streakNum">0</div><div class="lbl">Streak</div></div>
       <div class="stat slain"><div class="ico">⚔️</div><div class="num" id="slainNum">0</div><div class="lbl">Slain</div></div>
     </div>
+    <div class="today-haul">
+      <span class="th-l">오늘의 수확</span>
+      <span>✨ <b class="th-xp" id="todayXp">+0</b> XP</span>
+      <span>🪙 <b class="th-gold" id="todayGold">+0</b></span>
+    </div>
   </header>
 
   <div class="tabs">
     <button class="tab active" data-view="hunt"><span class="e">⚔️</span>사냥</button>
+    <button class="tab" data-view="gather"><span class="e">🌾</span>채집</button>
     <button class="tab" data-view="shop"><span class="e">🏪</span>상점</button>
     <button class="tab" data-view="log"><span class="e">📜</span>일지</button>
   </div>
@@ -511,9 +561,44 @@
     <div id="monsterList"></div>
   </div>
 
+  <!-- GATHER VIEW -->
+  <div class="view" id="gatherView">
+    <div class="gather-intro">🌾 자잘한 좋은 행동을 하나 했으면 톡 누르세요. 한국어 쇼츠 대신 영어 영상, 논문 한 문단 — 뭐든 <b>+4 XP & 골드 0.5~1.5(랜덤)</b>. 무엇이 나올진 뽑기 운!</div>
+    <div class="g-stats">
+      <div class="gs today"><div class="n" id="gToday">0</div><div class="l">오늘 채집</div></div>
+      <div class="gs total"><div class="n" id="gTotal">0</div><div class="l">총 채집</div></div>
+      <div class="gs days"><div class="n" id="gDays">0</div><div class="l">채집한 날</div></div>
+      <div class="gs cur"><div class="n" id="gCur">0</div><div class="l">현재 연속</div></div>
+      <div class="gs best"><div class="n" id="gBest">0</div><div class="l">최장 연속</div></div>
+    </div>
+    <div class="list-head"><h2>채집 노드</h2><span class="count">내 행동 <b id="gCount">0</b></span></div>
+    <div id="gatherList"></div>
+    <div class="shop-add">
+      <button class="shop-add-toggle" id="gatherAddToggle">＋ 채집 행동 추가</button>
+      <div class="shop-add-form" id="gatherAddForm">
+        <div class="saf-row">
+          <input id="newGatherName" placeholder="행동 이름 (예: 영어 유튜브 3분)" maxlength="40">
+        </div>
+        <button class="saf-add-btn" id="newGatherAdd">채집 목록에 추가</button>
+      </div>
+    </div>
+    <div class="list-head" style="margin-top:26px"><h2>🥷 유혹 골목</h2><span class="count">슬립 <b id="slipCount">0</b></span></div>
+    <div class="gather-intro">안 사고 indulge한 게 있으면 자백하세요. 도둑이 골드를 털어갑니다(가끔 XP도). 솔직할수록 경제가 정확해져요.</div>
+    <div id="slipList"></div>
+    <div class="shop-add">
+      <button class="shop-add-toggle" id="slipAddToggle">＋ 유혹 추가</button>
+      <div class="shop-add-form" id="slipAddForm">
+        <div class="saf-row">
+          <input id="newSlipName" placeholder="안 사고 한 것 (예: 한국어 쇼츠)" maxlength="40">
+        </div>
+        <button class="saf-add-btn" id="newSlipAdd">유혹 목록에 추가</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SHOP VIEW -->
   <div class="view" id="shopView">
-    <div class="shop-intro">🪙 모은 골드로 보상을 사세요. 살 수 있는 건 또렷하게, 아직 못 사는 건 흐리게 보여요. — 게임 6시간은 이제 공짜가 아니라 값이 매겨져 있어요.</div>
+    <div class="shop-intro">🏪 모험으로 번 골드를 떠돌이 상인과 거래하세요. 살 수 있는 건 또렷하게, 아직 못 사는 건 흐릿하게. — 게임 6시간은 이제 공짜가 아니라 값이 매겨져 있어요.</div>
     <div id="shopBody"></div>
     <div class="shop-add">
       <button class="shop-add-toggle" id="shopAddToggle">＋ 내 보상 직접 추가</button>
@@ -524,9 +609,9 @@
         </div>
         <div class="saf-row">
           <select id="newRewardCat">
-            <option value="infinite">⚡ 무한형 (길어지는 것)</option>
-            <option value="finite">🎬 유한형 (끝이 있는 것)</option>
-            <option value="special">💛 특별 (큰 보상)</option>
+            <option value="infinite">🌀 무한의 늪 (끝없이 길어지는 것)</option>
+            <option value="finite">🎟️ 오락 두루마리 (끝이 있는 것)</option>
+            <option value="special">🏆 전설의 전리품 (큰 보상)</option>
           </select>
         </div>
         <button class="saf-add-btn" id="newRewardAdd">상점에 추가</button>
@@ -581,6 +666,40 @@
   const STORE_KEY = "questHunter_v1";
 
   const TIER = {0:{xp:8,gold:2,label:"XS"},1:{xp:20,gold:5,label:"S"},2:{xp:50,gold:14,label:"M"},3:{xp:110,gold:35,label:"L"}};
+  // ---- GATHER (채집): repeatable micro-actions, FLAT reward, rarity is cosmetic only ----
+  const GATHER_REWARD={gold:1,xp:4};   // xp fixed; gold is now Gaussian — see gatherGold()
+  function gaussian(mean,sd){ const u=1-Math.random(), v=Math.random(); return mean+sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  function gatherGold(){ let g=gaussian(1.0,0.25); if(g<0.5)g=0.5; if(g>1.5)g=1.5; return Math.round(g*10)/10; } // 0.5~1.5, μ1.0, 0.1 step (~±2σ clamp)
+  function fmtGold(v){ const r=Math.round(v*10)/10; return Number.isInteger(r)?(""+r):r.toFixed(1); }
+  const RARITY=[
+    {key:"common",p:0.70,icons:["🌿","🍄","🌰","🪵","🌾","🪻"]},
+    {key:"rare",  p:0.25,icons:["⛏️","🌲","🪨","🍯","🦴"]},
+    {key:"epic",  p:0.05,icons:["💎","✨","🔮","👑","🌟"]}
+  ];
+  const RES_NAME={"🌿":"약초","🍄":"버섯","🌰":"도토리","🪵":"장작","🌾":"이삭","🪻":"들꽃",
+    "⛏️":"철광석","🌲":"원목","🪨":"암석","🍯":"벌꿀","🦴":"화석",
+    "💎":"수정","✨":"고대 유물","🔮":"마력석","👑":"왕관","🌟":"별조각"};
+  function rollRarity(){ let r=Math.random(),acc=0; for(const t of RARITY){ acc+=t.p; if(r<acc) return t; } return RARITY[0]; }
+  function defaultGatherNodes(){
+    return [
+      {id:"g1",label:"논문 1문단 읽기"},
+      {id:"g2",label:"모르는 용어 1개 정리"},
+      {id:"g3",label:"Figure 1개 이해"},
+      {id:"g4",label:"참고문헌 1개 찾아보기"},
+      {id:"g5",label:"영어 유튜브 3분"}
+    ];
+  }
+  // ---- THEFT (유혹/도난): self-reported slip → random loss. Gold-focused; XP only on rare heist ----
+  const THEFT=[
+    {key:"slip", p:0.70, icon:"💸", verb:"동전을 흘렸다",     gMin:2,  gMax:5,  xMin:0, xMax:0},
+    {key:"thief",p:0.25, icon:"🥷", verb:"도둑맞았다",        gMin:6,  gMax:12, xMin:0, xMax:0},
+    {key:"heist",p:0.05, icon:"💀", verb:"큰 도둑을 만났다",  gMin:13, gMax:25, xMin:4, xMax:12}
+  ];
+  function rollTheft(){ let r=Math.random(),acc=0; for(const t of THEFT){ acc+=t.p; if(r<acc) return t; } return THEFT[0]; }
+  function randInt(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+  function defaultSlipNodes(){
+    return [ {id:"s1",label:"한국어 쇼츠/유튜브"}, {id:"s2",label:"웹툰 정주행 (안 사고)"}, {id:"s3",label:"게임 한 판 (안 사고)"} ];
+  }
   const BOSS_MULT = 2.2;
   const TYPE_ICON = {research:"🧪",routine:"🌿",boss:"👑"};
   const MONSTER_ICONS = {
@@ -589,11 +708,11 @@
     boss:["🐉","👹","🦂","🦅","🐲","👺"]
   };
   const CAT_META = {
-    infinite:{title:"⚡ 무한형", desc:"한번 들어가면 길어지는 것"},
-    finite:{title:"🎬 유한형", desc:"끝이 있는 것"},
-    special:{title:"💛 특별", desc:"주말의 큰 보상"}
+    infinite:{title:"🌀 무한의 늪", desc:"한번 빠지면 끝없이 길어지는 것"},
+    finite:{title:"🎟️ 오락 두루마리", desc:"끝이 있는 한 판"},
+    special:{title:"🏆 전설의 전리품", desc:"주말의 큰 한 방"}
   };
-  const CAT_LABEL = {infinite:"⚡ 무한형",finite:"🎬 유한형",special:"💛 특별"};
+  const CAT_LABEL = {infinite:"🌀 무한의 늪",finite:"🎟️ 오락 두루마리",special:"🏆 전리품"};
   // pick a reward icon by name keyword; fall back to a name-hashed pick (varied across rewards, but stable per name)
   const ICON_MAP=[
     [["보드게임"],"🧩"],
@@ -681,6 +800,8 @@
     return {level:1,xp:0,gold:0,streak:0,totalKills:0,todayKills:0,
       lastDay:today(),monsters:[],shop:defaultShop(),
       purchasesToday:0,totalPurchases:0,soundOn:true,shopMig:0,
+      gatherNodes:defaultGatherNodes(),gatherTotal:0,gatherDays:{},gatherBestStreak:0,
+      slipNodes:defaultSlipNodes(),theftDays:{},
       log:[],logShowBuys:true};
   }
   // turn any saved object (localStorage OR an imported file) into a valid, migrated state
@@ -692,6 +813,16 @@
     if(!Array.isArray(m.log)) m.log=[];
     m.log.forEach((e,i)=>{ if(!e.id) e.id="L"+(e.t||0)+"-"+i; }); // backfill ids so old logs are undoable
     if(typeof m.logShowBuys!=="boolean") m.logShowBuys=true;
+    // gather state (also reaches existing users who saved before 채집 existed)
+    if(!Array.isArray(m.gatherNodes)) m.gatherNodes=defaultGatherNodes();
+    m.gatherNodes.forEach((n,i)=>{ if(!n.id) n.id="g"+(n.label||"")+i; });
+    if(typeof m.gatherTotal!=="number") m.gatherTotal=0;
+    if(!m.gatherDays||typeof m.gatherDays!=="object") m.gatherDays={};
+    Object.keys(m.gatherDays).forEach(k=>{ const v=m.gatherDays[k]; if(typeof v==="number") m.gatherDays[k]={n:v,gold:v}; }); // count → {n,gold} (old gathers were 1g)
+    if(typeof m.gatherBestStreak!=="number") m.gatherBestStreak=0;
+    if(!Array.isArray(m.slipNodes)) m.slipNodes=defaultSlipNodes();
+    m.slipNodes.forEach((n,i)=>{ if(!n.id) n.id="s"+(n.label||"")+i; });
+    if(!m.theftDays||typeof m.theftDays!=="object") m.theftDays={};
     // shop migration v1: fix legacy duplicate icon + add the daily-60 special reward (once, respects later deletion)
     if((m.shopMig||0)<1){
       const r3=m.shop.find(x=>x.id==="r3");
@@ -972,7 +1103,7 @@
   }
 
   let curType="research", curTier=1, pending=null, editingId=null;
-  let undoStack=[], undoTimer=null;
+  let undoStack=[], undoTimer=null, lastGather=null, lastTheft=null, undoAction=null;
   const $ = id=>document.getElementById(id);
 
   // ---- AUDIO ----
@@ -1031,9 +1162,16 @@
     xpGain:  ()=>beep([659,880,1175],    0.12,"triangle",0.13),  // XP shimmer up
     goldGain:()=>beep([988,1319],        0.1, "square",  0.14),  // coin gain
     undo:    ()=>beep([392,523,659],     0.12,"sine",    0.13),  // restore/recall
+    gather:  ()=>beep([659,988],         0.08,"sine",    0.12),  // common pluck
+    gatherRare:()=>beep([784,1175,1568], 0.12,"triangle",0.15),  // rare chime
+    gatherEpic:()=>beep([523,659,784,1046,1318,1568],0.4,"sawtooth",0.2), // epic fanfare
+    theft:   ()=>beep([330,247],         0.12,"sawtooth",0.13),  // coins lost (down)
+    theftBig:()=>beep([392,294,196,131], 0.4, "sawtooth",0.2),   // big heist alarm
     // --- shop ---
     add:     ()=>beep([440,330],         0.08,"sine",    0.1),   // added to a list
-    buy:     ()=>beep([784,1046,1318,1568],0.13,"triangle",0.17),// purchase get
+    buy:     ()=>beep([784,1046,1318,1568],0.13,"triangle",0.17),// purchase get (cheap)
+    buyBig:  ()=>beep([523,659,784,1046,1318,1568,2093],0.22,"triangle",0.2), // mid purchase
+    buyEpic: ()=>{ beep([392,523,659,784,1046,1318,1568,2093],0.5,"triangle",0.22); setTimeout(()=>beep([1046,1318,1568,2093,2637],0.5,"square",0.15),140); }, // grand
     spend:   ()=>beep([660,440,294],     0.12,"sawtooth",0.12),  // gold leaving (down)
     nope:    ()=>beep([220,165],         0.18,"sawtooth",0.12)   // can't afford
   };
@@ -1053,6 +1191,27 @@
     setTimeout(()=>w.classList.remove(cls),hard?500:320);
   }
   function bumpGold(){ const s=$("goldStat"); s.classList.remove("bump"); void s.offsetWidth; s.classList.add("bump"); }
+  function burst(cx,cy,emojis,count,spread){   // radial particle pop (purchase juice)
+    for(let i=0;i<count;i++){
+      const el=document.createElement("div"); el.className="burst-bit";
+      el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+      const ang=Math.random()*Math.PI*2, dist=spread*(0.35+Math.random()*0.65);
+      el.style.left=cx+"px"; el.style.top=cy+"px";
+      el.style.setProperty("--dx",Math.round(Math.cos(ang)*dist)+"px");
+      el.style.setProperty("--dy",Math.round(Math.sin(ang)*dist-40)+"px"); // slight upward bias
+      el.style.setProperty("--rot",Math.round(Math.random()*240-120)+"deg");
+      el.style.fontSize=Math.round(15+Math.random()*18)+"px";
+      fx.appendChild(el); setTimeout(()=>el.remove(),1000);
+    }
+  }
+  function goldRays(n){   // radial light rays (reuses .ray + lvlup keyframe)
+    for(let i=0;i<n;i++){
+      const r=document.createElement("div"); r.className="ray";
+      r.style.transform=`translate(-50%,0) rotate(${i*(360/n)}deg)`;
+      r.style.animation="lvlup 1.2s ease-out forwards";
+      document.body.appendChild(r); setTimeout(()=>r.remove(),1300);
+    }
+  }
   function levelUpBanner(newLv, titleChanged, newTitle){
     $("luSub").textContent="Lv "+newLv;
     const lt=$("luTitle");
@@ -1106,11 +1265,18 @@
   }
 
   // ---- RENDER ----
+  function todayEarned(){   // gross XP & gold earned today (kills + gathers); XP can't be spent, so always gross
+    const tk=dayKey(new Date());
+    let xp=0, gold=0;
+    S.log.forEach(e=>{ if(e.kind==="kill" && dayKeyTs(e.t)===tk){ xp+=e.xp||0; gold+=e.gold||0; } });
+    const gd=(S.gatherDays||{})[tk];
+    return {xp:xp+(gd?gd.n:0)*GATHER_REWARD.xp, gold:Math.round((gold+(gd?gd.gold:0))*10)/10};
+  }
   function render(){
     $("lvlNum").textContent=S.level;
     $("charTitle").textContent=titleForLevel(S.level);
     updateAvatar(S.level);
-    $("goldNum").textContent=S.gold;
+    $("goldNum").textContent=fmtGold(S.gold);
     $("streakNum").textContent=S.streak;
     $("slainNum").textContent=S.totalKills;
     $("todayKills").textContent=S.todayKills;
@@ -1118,9 +1284,14 @@
     const need=xpForLevel(S.level);
     $("xpNow").textContent=S.xp; $("xpNeed").textContent=need;
     $("xpBar").style.width=Math.min(100,(S.xp/need)*100)+"%";
+    const te=todayEarned();
+    $("todayXp").textContent="+"+te.xp;
+    $("todayGold").textContent="+"+fmtGold(te.gold);
     $("soundTg").textContent=S.soundOn?"🔊":"🔇";
     renderMonsters();
     renderShop();
+    renderGather();
+    renderSlip();
     renderLog();
   }
 
@@ -1212,7 +1383,7 @@
         const sub=`${CAT_LABEL[cat]} · ${r.price}🪙`+(r.dailyGold?` · 하루 ${r.dailyGold}🪙 모으면 열림`:``);
         let btnInner;
         if(dailyLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${tgold}/${r.dailyGold}🪙</span>`;
-        else if(!afford) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${need} 더</span>`;
+        else if(!afford) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(need)} 더</span>`;
         else btnInner=`<span class="bprice">${r.price}🪙</span><span class="blabel">구매</span>`;
         row.innerHTML=`
           <div class="si-ico">${r.icon}</div>
@@ -1308,26 +1479,33 @@
     const wrap=$("logTimeline");
     let entries=S.log.slice();
     if(!S.logShowBuys) entries=entries.filter(e=>e.kind==="kill");
-    if(entries.length===0){
-      wrap.innerHTML='<div class="empty"><span class="big">📜</span>아직 기록이 없어요.<br>첫 몬스터를 잡으면 여기에 날짜별로 쌓이기 시작해요.</div>';
+    const gDays=S.gatherDays||{};
+    const gKeys=Object.keys(gDays).filter(k=>gDays[k]&&gDays[k].n>0);
+    const tDays=S.theftDays||{};
+    const tKeys=Object.keys(tDays).filter(k=>tDays[k]&&tDays[k].n>0);
+    if(entries.length===0 && gKeys.length===0 && tKeys.length===0){
+      wrap.innerHTML='<div class="empty"><span class="big">📜</span>아직 기록이 없어요.<br>첫 몬스터를 잡거나 채집하면 여기에 날짜별로 쌓이기 시작해요.</div>';
       return;
     }
     entries.sort((a,b)=>b.t-a.t);
     const groups=[], idx={};
-    entries.forEach(e=>{
-      const k=dayKeyTs(e.t);
-      if(!(k in idx)){ idx[k]=groups.length; groups.push({date:new Date(e.t),items:[]}); }
-      groups[idx[k]].items.push(e);
-    });
+    function grp(k,date){ if(!(k in idx)){ idx[k]=groups.length; groups.push({date,items:[],gather:0,theft:null}); } return groups[idx[k]]; }
+    entries.forEach(e=>{ grp(dayKeyTs(e.t),new Date(e.t)).items.push(e); });
+    gKeys.forEach(k=>{ const p=k.split("-"); grp(k,new Date(+p[0],+p[1]-1,+p[2])).gather=gDays[k]; });
+    tKeys.forEach(k=>{ const p=k.split("-"); grp(k,new Date(+p[0],+p[1]-1,+p[2])).theft=tDays[k]; });
+    groups.sort((a,b)=>b.date-a.date);   // explicit: gather/theft-only days may have no log entries
     let html="";
     groups.forEach(g=>{
       const dayKills=g.items.filter(e=>e.kind==="kill");
       const xpSum=dayKills.reduce((s,e)=>s+(e.xp||0),0);
       const goldSum=dayKills.reduce((s,e)=>s+(e.gold||0),0);
       const buys=g.items.filter(e=>e.kind==="buy");
-      let sum=`<b>${dayKills.length}</b>마리 · +${xpSum} XP · +${goldSum}🪙`;
-      if(buys.length) sum+=` · 보상 ${buys.length}개`;
-      html+=`<div class="day-group"><div class="day-head"><span class="dh-date">${dayLabel(g.date)}</span><span class="dh-sum">${sum}</span></div>`;
+      const parts=[];
+      if(dayKills.length) parts.push(`<b>${dayKills.length}</b>마리 · +${xpSum} XP · +${goldSum}🪙`);
+      if(g.gather&&g.gather.n>0) parts.push(`🌾 ${g.gather.n}회`);
+      if(g.theft&&g.theft.n>0) parts.push(`🥷 -${g.theft.gold}🪙`);
+      if(buys.length) parts.push(`보상 ${buys.length}개`);
+      html+=`<div class="day-group"><div class="day-head"><span class="dh-date">${dayLabel(g.date)}</span><span class="dh-sum">${parts.join(" · ")||"—"}</span></div>`;
       g.items.forEach(e=>{
         if(e.kind==="kill"){
           const tn=e.mtype==="boss"?"보스":(e.mtype==="routine"?"루틴":"연구");
@@ -1346,6 +1524,20 @@
             <button class="le-undo" data-undo="${e.id}" title="이 구매 되돌리기 (환불)">↩︎</button></div>`;
         }
       });
+      if(g.gather&&g.gather.n>0){
+        html+=`<div class="log-entry gather">
+          <div class="le-ico">🌾</div>
+          <div class="le-body"><div class="le-name">채집 ${g.gather.n}회</div>
+          <div class="le-meta">자잘한 생산 행동</div></div>
+          <div class="le-rw">+${fmtGold(g.gather.gold)}🪙<br>+${g.gather.n*GATHER_REWARD.xp}XP</div></div>`;
+      }
+      if(g.theft&&g.theft.n>0){
+        html+=`<div class="log-entry theft">
+          <div class="le-ico">🥷</div>
+          <div class="le-body"><div class="le-name">도둑맞음 ${g.theft.n}회</div>
+          <div class="le-meta">유혹에 진 대가</div></div>
+          <div class="le-rw">-${g.theft.gold}🪙${g.theft.xp>0?`<br>-${g.theft.xp}XP`:``}</div></div>`;
+      }
       html+=`</div>`;
     });
     wrap.innerHTML=html;
@@ -1395,7 +1587,7 @@
       addXp(gotXp);
       undoStack.push({snap,monster:monsterCopy,logEntry});
       if(undoStack.length>100) undoStack=undoStack.slice(-100);
-      showUndo(m.name);
+      showUndo("🗡️ "+m.name+" 처치 완료", undoKill);
       save(); render();
     },360);
   }
@@ -1406,16 +1598,183 @@
     S.monsters.unshift(u.monster);            // bring the monster back to the top
     S.log=S.log.filter(x=>x!==u.logEntry);    // drop its log entry
     save();
-    if(undoStack.length) showUndo(undoStack[undoStack.length-1].monster.name);
+    if(undoStack.length) showUndo("🗡️ "+undoStack[undoStack.length-1].monster.name+" 처치 완료", undoKill);
     else hideUndo();
     render();
   }
-  function showUndo(name){
-    $("undoName").textContent=name;
+  function showUndo(msg, action){
+    $("undoMsg").textContent=msg;
+    undoAction=action||null;
     $("undoBar").classList.add("show");
     clearTimeout(undoTimer); undoTimer=setTimeout(hideUndo,6000);
   }
-  function hideUndo(){ $("undoBar").classList.remove("show"); clearTimeout(undoTimer); }
+  function hideUndo(){ $("undoBar").classList.remove("show"); undoAction=null; clearTimeout(undoTimer); }
+
+  // ---- GATHER actions ----
+  function gatherStreaks(){
+    const days=S.gatherDays||{}, has=k=>!!(days[k]&&days[k].n>0);
+    let d=startOfDay(new Date());
+    if(!has(dayKey(d))) d=new Date(d.getTime()-DAY_MS);   // today empty: current streak holds from yesterday
+    let cur=0; while(has(dayKey(d))){ cur++; d=new Date(d.getTime()-DAY_MS); }
+    return {cur, dayCount:Object.keys(days).filter(k=>days[k]&&days[k].n>0).length};
+  }
+  function renderGather(){
+    const {cur,dayCount}=gatherStreaks();
+    if(cur>S.gatherBestStreak) S.gatherBestStreak=cur;   // record is a high-water mark (never lowered)
+    const gdT=S.gatherDays[dayKey(new Date())]; $("gToday").textContent=gdT?gdT.n:0;
+    $("gTotal").textContent=S.gatherTotal;
+    $("gDays").textContent=dayCount;
+    $("gCur").textContent=cur;
+    $("gBest").textContent=S.gatherBestStreak;
+    const list=$("gatherList"); $("gCount").textContent=S.gatherNodes.length;
+    list.innerHTML="";
+    if(S.gatherNodes.length===0){
+      list.innerHTML='<div class="empty"><span class="big">🌾</span>채집할 행동이 없어요.<br>아래에서 자잘한 좋은 행동을 추가해요.</div>';
+      return;
+    }
+    S.gatherNodes.forEach(n=>{
+      const row=document.createElement("div"); row.className="g-node"; row.dataset.id=n.id;
+      if(n.id===editingId){
+        row.innerHTML=`<div class="g-node-ico">✎</div>
+          <div class="g-node-body"><input class="gname-input" type="text" maxlength="40" value="${escapeHtml(n.label)}"></div>
+          <button class="edit-save">저장</button><button class="edit-cancel">취소</button>`;
+        const inp=row.querySelector(".gname-input");
+        const commit=()=>{ const v=inp.value.trim(); if(!v){ SND.nope(); inp.focus(); return; } n.label=v; editingId=null; save(); renderGather(); SND.add(); };
+        row.querySelector(".edit-save").addEventListener("click",ev=>{ ev.stopPropagation(); commit(); });
+        row.querySelector(".edit-cancel").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=null; renderGather(); });
+        inp.addEventListener("keydown",ev=>{ if(ev.key==="Enter") commit(); else if(ev.key==="Escape"){ editingId=null; renderGather(); } });
+        list.appendChild(row); return;
+      }
+      row.innerHTML=`<div class="g-node-ico">🌾</div>
+        <div class="g-node-body"><div class="g-node-name">${escapeHtml(n.label)}</div>
+        <div class="g-node-sub"><b>+${GATHER_REWARD.xp} XP</b> · 🪙 0.5~1.5 · 무엇이 나올진 운!</div></div>
+        <button class="g-btn">채집</button>
+        <span class="edit-x" title="이름 수정">✎</span><span class="del-x" title="목록에서 빼기">✕</span>`;
+      row.querySelector(".g-btn").addEventListener("click",ev=>{ ev.stopPropagation(); gather(n.id,ev); });
+      row.querySelector(".edit-x").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=n.id; renderGather(); });
+      row.querySelector(".del-x").addEventListener("click",ev=>{ ev.stopPropagation(); if(confirm("이 채집 행동을 뺄까요?")){ S.gatherNodes=S.gatherNodes.filter(x=>x.id!==n.id); save(); renderGather(); } });
+      list.appendChild(row);
+    });
+    if(editingId){ const i=list.querySelector(".g-node .gname-input"); if(i){ i.focus(); i.select(); } }
+  }
+  function gather(id,ev){
+    ensureAudio();
+    const node=S.gatherNodes.find(n=>n.id===id); if(!node) return;
+    const rarity=rollRarity();
+    const icon=rarity.icons[Math.floor(Math.random()*rarity.icons.length)];
+    const day=dayKey(new Date());
+    const goldGain=gatherGold();                          // Gaussian 0.5~1.5
+    S.gold=Math.round((S.gold+goldGain)*10)/10;
+    const gd=S.gatherDays[day]||(S.gatherDays[day]={n:0,gold:0});
+    gd.n+=1; gd.gold=Math.round((gd.gold+goldGain)*10)/10;
+    S.gatherTotal+=1;
+    const isEpic=rarity.key==="epic", isRare=rarity.key==="rare";
+    if(isEpic){ SND.gatherEpic(); shakeScreen(true); }
+    else if(isRare){ SND.gatherRare(); }
+    else SND.gather();
+    const rect=ev.currentTarget.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const nm=RES_NAME[icon]||"자원";
+    floatText(cx,cy-10,icon+" "+nm+(isEpic?" 대발견!":" 발견!"),isEpic?"crit":(isRare?"reward":"xp"));
+    setTimeout(()=>floatText(cx-16,cy+8,"+"+fmtGold(goldGain)+"🪙","gold"),100);
+    setTimeout(()=>floatText(cx+16,cy+8,"+"+GATHER_REWARD.xp+" XP","xp"),180);
+    bumpGold();
+    addXp(GATHER_REWARD.xp);
+    const st=gatherStreaks(); if(st.cur>S.gatherBestStreak) S.gatherBestStreak=st.cur;
+    lastGather={day,gold:goldGain}; showUndo("🌾 "+node.label+" 채집 +"+fmtGold(goldGain)+"🪙", undoGather);
+    save(); render();
+  }
+  function undoGather(){
+    if(!lastGather) return;
+    const day=lastGather.day, lg=lastGather.gold||0;
+    S.gold=Math.round((S.gold-lg)*10)/10;                  // gold may go negative (allowed)
+    setFromTotalXp(totalXp()-GATHER_REWARD.xp);           // exact XP/level rollback
+    const gd=S.gatherDays[day];
+    if(gd){ gd.n-=1; gd.gold=Math.round((gd.gold-lg)*10)/10; if(gd.n<=0) delete S.gatherDays[day]; }
+    S.gatherTotal=Math.max(0,S.gatherTotal-1);            // 최장 연속 기록은 그대로(되돌려도 안 깎음)
+    lastGather=null; hideUndo();
+    save(); render();
+  }
+  function addGatherNode(){
+    const name=$("newGatherName").value.trim(); if(!name) return;
+    S.gatherNodes.push({id:"g"+Date.now()+Math.random().toString(36).slice(2,5),label:name});
+    $("newGatherName").value="";
+    $("gatherAddForm").classList.remove("open"); $("gatherAddToggle").textContent="＋ 채집 행동 추가";
+    save(); renderGather(); SND.add();
+  }
+  // ---- SLIP / THEFT actions (유혹 골목) ----
+  function renderSlip(){
+    const list=$("slipList"); $("slipCount").textContent=S.slipNodes.length;
+    list.innerHTML="";
+    if(S.slipNodes.length===0){
+      list.innerHTML='<div class="empty"><span class="big">🥷</span>유혹이 없어요.<br>안 사고 한 것을 자백 목록에 추가해요.</div>';
+      return;
+    }
+    S.slipNodes.forEach(n=>{
+      const row=document.createElement("div"); row.className="g-node slip"; row.dataset.id=n.id;
+      if(n.id===editingId){
+        row.innerHTML=`<div class="g-node-ico">✎</div>
+          <div class="g-node-body"><input class="gname-input" type="text" maxlength="40" value="${escapeHtml(n.label)}"></div>
+          <button class="edit-save">저장</button><button class="edit-cancel">취소</button>`;
+        const inp=row.querySelector(".gname-input");
+        const commit=()=>{ const v=inp.value.trim(); if(!v){ SND.nope(); inp.focus(); return; } n.label=v; editingId=null; save(); renderSlip(); SND.add(); };
+        row.querySelector(".edit-save").addEventListener("click",ev=>{ ev.stopPropagation(); commit(); });
+        row.querySelector(".edit-cancel").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=null; renderSlip(); });
+        inp.addEventListener("keydown",ev=>{ if(ev.key==="Enter") commit(); else if(ev.key==="Escape"){ editingId=null; renderSlip(); } });
+        list.appendChild(row); return;
+      }
+      row.innerHTML=`<div class="g-node-ico">🍫</div>
+        <div class="g-node-body"><div class="g-node-name">${escapeHtml(n.label)}</div>
+        <div class="g-node-sub">안 사고 했다면 자백 → 도둑맞음(랜덤)</div></div>
+        <button class="s-btn">자백</button>
+        <span class="edit-x" title="이름 수정">✎</span><span class="del-x" title="목록에서 빼기">✕</span>`;
+      row.querySelector(".s-btn").addEventListener("click",ev=>{ ev.stopPropagation(); steal(n.id,ev); });
+      row.querySelector(".edit-x").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=n.id; renderSlip(); });
+      row.querySelector(".del-x").addEventListener("click",ev=>{ ev.stopPropagation(); if(confirm("이 유혹을 뺄까요?")){ S.slipNodes=S.slipNodes.filter(x=>x.id!==n.id); save(); renderSlip(); } });
+      list.appendChild(row);
+    });
+    if(editingId){ const i=list.querySelector(".g-node.slip .gname-input"); if(i){ i.focus(); i.select(); } }
+  }
+  function steal(id,ev){
+    ensureAudio();
+    const node=S.slipNodes.find(n=>n.id===id); if(!node) return;
+    const t=rollTheft();
+    const gold=randInt(t.gMin,t.gMax);
+    const xpWant=t.xMax?randInt(t.xMin,t.xMax):0;
+    const day=dayKey(new Date());
+    S.gold-=gold;                                   // gold may go negative (allowed)
+    let xp=0;
+    if(xpWant>0){ const bt=totalXp(); setFromTotalXp(bt-xpWant); xp=bt-totalXp(); } // store ACTUAL removed (clamp-safe → exact undo)
+    const td=S.theftDays[day]||(S.theftDays[day]={n:0,gold:0,xp:0});
+    td.n+=1; td.gold+=gold; td.xp+=xp;
+    const big=t.key==="heist";
+    if(big){ SND.theftBig(); shakeScreen(true); } else SND.theft();
+    const rect=ev.currentTarget.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    floatText(cx,cy-10,t.icon+" "+t.verb+"!","spend");
+    setTimeout(()=>floatText(cx-16,cy+8,"-"+gold+"🪙","spend"),100);
+    if(xp>0) setTimeout(()=>floatText(cx+16,cy+8,"-"+xp+" XP","spend"),180);
+    bumpGold();
+    lastTheft={day,gold,xp}; showUndo(t.icon+" "+node.label+" → -"+gold+"🪙"+(xp?" -"+xp+"XP":""), undoTheft);
+    save(); render();
+  }
+  function undoTheft(){
+    if(!lastTheft) return;
+    const t=lastTheft;
+    S.gold+=t.gold;                                 // give the stolen gold back
+    if(t.xp>0) setFromTotalXp(totalXp()+t.xp);     // give the stolen xp back (re-level if needed)
+    const td=S.theftDays[t.day];
+    if(td){ td.n-=1; td.gold-=t.gold; td.xp-=t.xp; if(td.n<=0) delete S.theftDays[t.day]; }
+    lastTheft=null; hideUndo();
+    save(); render();
+  }
+  function addSlipNode(){
+    const name=$("newSlipName").value.trim(); if(!name) return;
+    S.slipNodes.push({id:"s"+Date.now()+Math.random().toString(36).slice(2,5),label:name});
+    $("newSlipName").value="";
+    $("slipAddForm").classList.remove("open"); $("slipAddToggle").textContent="＋ 유혹 추가";
+    save(); renderSlip(); SND.add();
+  }
 
   // ---- UNDO from the LOG (older kills, when the toast was missed) ----
   // No in-memory snapshot exists for past entries, so we reverse the effects deterministically.
@@ -1488,8 +1847,8 @@
     $("modalIco").textContent=r.icon;
     $("modalName").textContent=r.name;
     $("modalPrice").textContent=r.price+"🪙";
-    $("modalHave").textContent=S.gold;
-    $("modalLeft").textContent=S.gold-r.price;
+    $("modalHave").textContent=fmtGold(S.gold);
+    $("modalLeft").textContent=fmtGold(S.gold-r.price);
     $("modalBack").classList.add("show");
   }
   function closeBuy(){ $("modalBack").classList.remove("show"); pending=null; }
@@ -1502,11 +1861,24 @@
     S.gold-=r.price; S.purchasesToday+=1; S.totalPurchases+=1;
     S.log.push({id:uid(),t:Date.now(),kind:"buy",name:r.name,icon:r.icon,gold:r.price});
     closeBuy();
-    SND.buy(); bumpGold();
-    setTimeout(()=>SND.spend(),130);   // gold leaving, synced with the -price float
+    bumpGold();
+    const price=r.price, tier=price>=100?3:(price>=40?2:1);   // 화려함은 가격대별로
     const cx=window.innerWidth/2, cy=window.innerHeight/2;
-    floatText(cx,cy-10,r.icon+" 획득!","reward");
-    setTimeout(()=>floatText(cx,cy+24,"-"+r.price+"🪙","spend"),120);
+    if(tier===3){
+      SND.buyEpic(); shakeScreen(true); goldRays(10);
+      floatText(cx,cy-14,r.icon+" 전설 획득!","reward big");
+      burst(cx,cy,["🪙","✨","🎉","💎","🌟"],26,300);
+    } else if(tier===2){
+      SND.buyBig(); shakeScreen(true);
+      floatText(cx,cy-12,r.icon+" 획득!","reward");
+      burst(cx,cy,["🪙","✨","🎉","💫"],14,200);
+    } else {
+      SND.buy(); shakeScreen(false);
+      floatText(cx,cy-10,r.icon+" 획득!","reward");
+      burst(cx,cy,["🪙","✨"],7,120);
+    }
+    setTimeout(()=>SND.spend(), tier===3?260:160);   // gold leaving, after the fanfare
+    setTimeout(()=>floatText(cx,cy+28,"-"+price+"🪙","spend"),150);
     save(); render();
   }
 
@@ -1544,6 +1916,7 @@
     document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
     const view=t.dataset.view;
     $("huntView").classList.toggle("active",view==="hunt");
+    $("gatherView").classList.toggle("active",view==="gather");
     $("shopView").classList.toggle("active",view==="shop");
     $("logView").classList.toggle("active",view==="log");
   });
@@ -1584,6 +1957,18 @@
     $("shopAddToggle").textContent=open?"× 닫기":"＋ 내 보상 직접 추가";
   });
   $("newRewardAdd").addEventListener("click",addReward);
+  $("gatherAddToggle").addEventListener("click",()=>{
+    const f=$("gatherAddForm"); const open=f.classList.toggle("open");
+    $("gatherAddToggle").textContent=open?"× 닫기":"＋ 채집 행동 추가";
+  });
+  $("newGatherAdd").addEventListener("click",addGatherNode);
+  $("newGatherName").addEventListener("keydown",e=>{ if(e.key==="Enter") addGatherNode(); });
+  $("slipAddToggle").addEventListener("click",()=>{
+    const f=$("slipAddForm"); const open=f.classList.toggle("open");
+    $("slipAddToggle").textContent=open?"× 닫기":"＋ 유혹 추가";
+  });
+  $("newSlipAdd").addEventListener("click",addSlipNode);
+  $("newSlipName").addEventListener("keydown",e=>{ if(e.key==="Enter") addSlipNode(); });
   $("logBuyToggle").addEventListener("click",()=>{
     S.logShowBuys=!S.logShowBuys;
     $("logBuyToggle").classList.toggle("on",S.logShowBuys);
@@ -1591,7 +1976,7 @@
   });
   $("modalCancel").addEventListener("click",closeBuy);
   $("modalConfirm").addEventListener("click",confirmBuy);
-  $("undoBtn").addEventListener("click",undoKill);
+  $("undoBtn").addEventListener("click",()=>{ if(undoAction) undoAction(); });
   $("logTimeline").addEventListener("click",e=>{   // delegated: undo a kill or a purchase already in the log
     const b=e.target.closest(".le-undo"); if(!b) return;
     const entry=S.log.find(x=>x.id===b.dataset.undo); if(!entry) return;
@@ -1620,6 +2005,8 @@
     if(t.closest(".edit-save"))       return;   // commit → add / nope
     if(t.closest(".slay-btn"))        return;   // slay → 완료 + xp + gold
     if(t.closest(".buy-btn"))         return;   // openBuy → open / nope
+    if(t.closest(".g-btn"))           return;   // gather → rarity sound in handler
+    if(t.closest(".s-btn"))           return;   // steal → theft sound in handler
     if(t.closest("button, a, select, input")) return SND.ui();
   }
   document.addEventListener("pointerdown",uiPress);
