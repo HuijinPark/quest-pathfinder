@@ -1107,11 +1107,19 @@
   const $ = id=>document.getElementById(id);
 
   // ---- AUDIO ----
-  let actx=null;
+  let actx=null, audioUnlocked=false;
   function ensureAudio(){
     if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
     if(actx && actx.state==="suspended"){ try{ actx.resume(); }catch(e){} }
+    if(actx && !audioUnlocked){   // mobile/iOS: a 1-sample silent buffer inside a gesture fully unlocks output
+      try{ const s=actx.createBufferSource(); s.buffer=actx.createBuffer(1,1,22050); s.connect(actx.destination); s.start(0); audioUnlocked=true; }catch(e){}
+    }
   }
+  // unlock on the FIRST interaction anywhere (taps on empty space too, not only controls)
+  ["touchstart","touchend","pointerdown","mousedown","keydown"].forEach(ev=>document.addEventListener(ev,ensureAudio,{passive:true}));
+  // the context gets suspended when the tab backgrounds — re-resume when it returns (common on phones)
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) ensureAudio(); });
+  window.addEventListener("focus",ensureAudio);
   function beep(freqs,dur,type,vol){
     if(!S.soundOn||!actx) return;
     const now=actx.currentTime;
