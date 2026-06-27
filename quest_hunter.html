@@ -165,6 +165,19 @@
     cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.35;transition:opacity .15s}
   .monster:hover .del-x,.shop-item:hover .del-x{opacity:1}
   .del-x:hover{color:var(--hp);border-color:var(--hp)}
+  .monster:hover .edit-x{opacity:1}
+  .drag-handle{flex-shrink:0;width:16px;align-self:stretch;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-dim);font-size:13px;cursor:grab;opacity:.35;touch-action:none;user-select:none;-webkit-user-select:none}
+  .drag-handle:active{cursor:grabbing}
+  .monster:hover .drag-handle{opacity:.85}
+  .monster.dragging{opacity:.6;box-shadow:0 10px 26px rgba(0,0,0,.5);z-index:5}
+  .monster.editing{align-items:stretch}
+  .mon-edit-form{flex:1;display:flex;flex-direction:column;gap:9px;width:100%;min-width:0}
+  .mon-name-input{width:100%;background:var(--void);border:1px solid var(--gold-deep);border-radius:9px;padding:9px 11px;color:var(--ink);font-size:15px;font-family:inherit}
+  .mon-name-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,200,75,.15)}
+  .mon-edit-form .type-toggle,.mon-edit-form .tier-row{margin-top:0}
+  .mon-edit-btns{display:flex;gap:8px;margin-top:2px}
+  .mon-edit-btns .edit-save,.mon-edit-btns .edit-cancel{flex:1}
   .monster.dying{animation:die .45s forwards}
   @keyframes die{0%{transform:scale(1);opacity:1}
     30%{transform:scale(1.06) translateX(4px);opacity:1;filter:brightness(2)}
@@ -220,6 +233,9 @@
   .edit-cancel{flex-shrink:0;border:1px solid var(--edge);border-radius:9px;cursor:pointer;
     background:var(--void);color:var(--ink-dim);font-size:13px;font-family:inherit;padding:9px 11px}
   .edit-save:active,.edit-cancel:active{transform:scale(.94)}
+  .si-edit{flex-wrap:wrap}
+  .wk-toggle{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-dim);cursor:pointer;white-space:nowrap}
+  .wk-toggle input{accent-color:var(--gold);cursor:pointer;margin:0}
 
   .shop-add{margin-top:18px}
   .shop-add-toggle{width:100%;background:var(--panel);border:1px dashed var(--edge);border-radius:12px;
@@ -836,6 +852,11 @@
       m.shop.forEach(it=>{ if(it.id && it.id.charAt(0)==="u" && ["🎯","🎬","💛"].indexOf(it.icon)>=0) it.icon=pickIcon(it.name,it.cat); });
       m.shopMig=2;
     }
+    // v3: 전설의 전리품(주말 보상) default to once-per-week (user can toggle off later)
+    if((m.shopMig||0)<3){
+      ["r7","r8"].forEach(id=>{ const it=m.shop.find(x=>x.id===id); if(it) it.weekly=true; });
+      m.shopMig=3;
+    }
     return m;
   }
   function load(){
@@ -1318,11 +1339,46 @@
       return;
     }
     alive.forEach(m=>{
-      const reward=calcReward(m);
       const el=document.createElement("div");
-      el.className="monster"; el.dataset.type=m.type; el.dataset.id=m.id;
+      el.dataset.type=m.type; el.dataset.id=m.id;
+      if(m.id===editingId){                 // inline edit: name + type + 크기(tier)
+        el.className="monster editing";
+        el.innerHTML=`<div class="mon-edit-form">
+          <input class="mon-name-input" type="text" maxlength="80" value="${escapeHtml(m.name)}" placeholder="몬스터 이름">
+          <div class="type-toggle mon-type">
+            <button class="type-btn${m.type==="research"?" sel":""}" data-type="research"><span class="e">🧪</span>연구</button>
+            <button class="type-btn${m.type==="routine"?" sel":""}" data-type="routine"><span class="e">🌿</span>루틴</button>
+            <button class="type-btn${m.type==="boss"?" sel":""}" data-type="boss"><span class="e">👑</span>보스</button>
+          </div>
+          <div class="tier-row"><span>크기</span><div class="tier-pills mon-tier">
+            <button class="tier-pill${m.tier===0?" sel":""}" data-tier="0">XS</button>
+            <button class="tier-pill${m.tier===1?" sel":""}" data-tier="1">S</button>
+            <button class="tier-pill${m.tier===2?" sel":""}" data-tier="2">M</button>
+            <button class="tier-pill${m.tier===3?" sel":""}" data-tier="3">L</button>
+          </div></div>
+          <div class="mon-edit-btns"><button class="edit-save">저장</button><button class="edit-cancel">취소</button></div>
+        </div>`;
+        const tt=el.querySelector(".mon-type"), tp=el.querySelector(".mon-tier"), nameInp=el.querySelector(".mon-name-input");
+        tt.addEventListener("click",ev=>{ const b=ev.target.closest(".type-btn"); if(b)[...tt.children].forEach(c=>c.classList.toggle("sel",c===b)); });
+        tp.addEventListener("click",ev=>{ const b=ev.target.closest(".tier-pill"); if(b)[...tp.children].forEach(c=>c.classList.toggle("sel",c===b)); });
+        const commit=()=>{
+          const nm=nameInp.value.trim(); if(!nm){ SND.nope(); nameInp.focus(); return; }
+          const st=tt.querySelector(".type-btn.sel"), sp=tp.querySelector(".tier-pill.sel");
+          const newType=st?st.dataset.type:m.type, newTier=sp?+sp.dataset.tier:m.tier;
+          if(newType!==m.type){ const pool=MONSTER_ICONS[newType]; m.icon=newType==="boss"?TYPE_ICON.boss:pool[Math.floor(Math.random()*pool.length)]; }
+          m.name=nm; m.type=newType; m.tier=newTier;
+          editingId=null; save(); render(); SND.add();
+        };
+        el.querySelector(".edit-save").addEventListener("click",ev=>{ ev.stopPropagation(); commit(); });
+        el.querySelector(".edit-cancel").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=null; render(); });
+        nameInp.addEventListener("keydown",ev=>{ if(ev.key==="Enter") commit(); else if(ev.key==="Escape"){ editingId=null; render(); } });
+        list.appendChild(el); return;
+      }
+      const reward=calcReward(m);
+      el.className="monster";
       const typeName=m.type==="boss"?"보스":(m.type==="routine"?"루틴":"연구");
       el.innerHTML=`
+        <span class="drag-handle" title="드래그로 순서 변경">⠿</span>
         <div class="mon-ico">${m.icon}</div>
         <div class="mon-body">
           <div class="mon-name">${escapeHtml(m.name)}</div>
@@ -1332,16 +1388,42 @@
           </div>
           <div class="hpbar"><i style="width:100%"></i></div>
         </div>
-        <button class="slay-btn" title="처치!">🗡️<span class="del-x" data-del="${m.id}">✕</span></button>`;
-      el.querySelector(".slay-btn").addEventListener("click",ev=>{
-        if(ev.target.dataset.del) return; slay(m.id,ev);
-      });
-      el.querySelector(".del-x").addEventListener("click",ev=>{
-        ev.stopPropagation();
-        S.monsters=S.monsters.filter(x=>x.id!==m.id); save(); render();
-      });
+        <button class="slay-btn" title="처치!">🗡️</button>
+        <span class="edit-x" title="이름·크기 수정">✎</span>
+        <span class="del-x" title="목록에서 빼기">✕</span>`;
+      el.querySelector(".slay-btn").addEventListener("click",ev=>{ slay(m.id,ev); });
+      el.querySelector(".edit-x").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=m.id; render(); });
+      el.querySelector(".del-x").addEventListener("click",ev=>{ ev.stopPropagation(); S.monsters=S.monsters.filter(x=>x.id!==m.id); save(); render(); });
+      el.querySelector(".drag-handle").addEventListener("pointerdown",ev=>startDrag(ev,el));
       list.appendChild(el);
     });
+    if(editingId){ const i=list.querySelector(".monster.editing .mon-name-input"); if(i){ i.focus(); i.select(); } }
+  }
+  // ---- drag-to-reorder the hunt list (pointer events → works on touch + mouse) ----
+  let dragEl=null;
+  function dragAfter(list,y){
+    const cards=[...list.querySelectorAll(".monster:not(.dragging)")];
+    let closest={offset:-Infinity, el:null};
+    cards.forEach(child=>{ const box=child.getBoundingClientRect(); const off=y-box.top-box.height/2; if(off<0 && off>closest.offset) closest={offset:off, el:child}; });
+    return closest.el;
+  }
+  function startDrag(ev,el){
+    if(editingId) return;
+    ev.preventDefault();
+    const list=$("monsterList");
+    try{ ev.currentTarget.setPointerCapture(ev.pointerId); }catch(e){}
+    dragEl=el; el.classList.add("dragging");
+    const move=e=>{ e.preventDefault(); const after=dragAfter(list,e.clientY); if(after==null) list.appendChild(dragEl); else list.insertBefore(dragEl,after); };
+    const up=()=>{
+      document.removeEventListener("pointermove",move); document.removeEventListener("pointerup",up); document.removeEventListener("pointercancel",up);
+      if(dragEl) dragEl.classList.remove("dragging");
+      const order=[...list.querySelectorAll(".monster")].map(c=>c.dataset.id);
+      S.monsters.sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));   // persist new order
+      dragEl=null; save(); render();
+    };
+    document.addEventListener("pointermove",move,{passive:false});
+    document.addEventListener("pointerup",up);
+    document.addEventListener("pointercancel",up);
   }
 
   function renderShop(){
@@ -1361,18 +1443,20 @@
             <div class="si-ico">${r.icon}</div>
             <div class="si-body">
               <input class="name-input" type="text" maxlength="40" value="${escapeHtml(r.name)}" placeholder="보상 이름">
-              <div class="si-edit"><input class="price-input" type="number" min="1" value="${r.price}"><span>🪙</span></div>
+              <div class="si-edit"><input class="price-input" type="number" min="1" value="${r.price}"><span>🪙</span>
+                <label class="wk-toggle"><input type="checkbox" class="weekly-input" ${r.weekly?"checked":""}>주 1회</label></div>
             </div>
             <button class="edit-save">저장</button>
             <button class="edit-cancel">취소</button>`;
           const nameInp=row.querySelector(".name-input");
           const inp=row.querySelector(".price-input");
+          const wkInp=row.querySelector(".weekly-input");
           const commit=()=>{
             const nm=nameInp.value.trim();
             const v=parseInt(inp.value,10);
             if(!nm){ SND.nope(); nameInp.focus(); return; }
             if(!v||v<1){ SND.nope(); inp.focus(); return; }
-            r.name=nm; r.price=v; editingId=null; save(); renderShop(); SND.add();
+            r.name=nm; r.price=v; r.weekly=wkInp.checked; editingId=null; save(); renderShop(); SND.add();
           };
           row.querySelector(".edit-save").addEventListener("click",ev=>{ ev.stopPropagation(); commit(); });
           row.querySelector(".edit-cancel").addEventListener("click",ev=>{ ev.stopPropagation(); editingId=null; renderShop(); });
@@ -1383,14 +1467,16 @@
           sec.appendChild(row);
           return;
         }
+        const wkLocked=weeklyLocked(r);
         const dailyLocked=r.dailyGold && tgold<r.dailyGold;
         const afford=S.gold>=r.price;
         const need=r.price-S.gold;
-        const buyable=afford && !dailyLocked;
+        const buyable=afford && !dailyLocked && !wkLocked;
         row.className="shop-item"+(buyable?"":" locked");
-        const sub=`${CAT_LABEL[cat]} · ${r.price}🪙`+(r.dailyGold?` · 하루 ${r.dailyGold}🪙 모으면 열림`:``);
+        const sub=`${CAT_LABEL[cat]} · ${r.price}🪙`+(r.weekly?` · 주 1회`:``)+(r.dailyGold?` · 하루 ${r.dailyGold}🪙 모으면 열림`:``);
         let btnInner;
-        if(dailyLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(tgold)}/${r.dailyGold}🪙</span>`;
+        if(wkLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">이번 주 완료</span>`;
+        else if(dailyLocked) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(tgold)}/${r.dailyGold}🪙</span>`;
         else if(!afford) btnInner=`<span class="bprice">${r.price}🪙</span><span class="bneed">${fmtGold(need)} 더</span>`;
         else btnInner=`<span class="bprice">${r.price}🪙</span><span class="blabel">구매</span>`;
         row.innerHTML=`
@@ -1400,10 +1486,11 @@
             <div class="si-sub">${sub}</div>
           </div>
           <button class="buy-btn ${buyable?"":"locked"}">${btnInner}</button>
-          <span class="edit-x" title="이름·가격 수정">✎</span>
+          <span class="edit-x" title="이름·가격·주1회 수정">✎</span>
           <span class="del-x" title="목록에서 빼기">✕</span>`;
         row.querySelector(".buy-btn").addEventListener("click",ev=>{
           ev.stopPropagation();
+          if(wkLocked){ SND.nope(); return; }
           if(dailyLocked){ SND.nope(); return; }
           if(!afford){ SND.nope(); bumpGold(); return; }
           openBuy(r);
@@ -1435,6 +1522,8 @@
   function dayKeyTs(ts){ return dayKey(new Date(ts)); }
   // gold EARNED today, derived from the kill log (single source of truth; auto-correct on undo / midnight / pre-existing kills)
   function todayGoldEarned(){ return todayEarned().gold; }   // kills + gathers today (matches header "오늘의 수확")
+  function weekStartTs(){ const t=startOfDay(new Date()); return t.getTime()-t.getDay()*DAY_MS; }   // Sunday 00:00 of current week
+  function weeklyLocked(r){ return !!(r.weekly && r.lastBought && r.lastBought>=weekStartTs()); }
   function timeOf(ts){ const d=new Date(ts); return pad2(d.getHours())+":"+pad2(d.getMinutes()); }
   function dayLabel(date){
     const t0=startOfDay(new Date()).getTime();
@@ -1870,9 +1959,11 @@
     if(!pending){ closeBuy(); return; }
     if(S.gold<pending.price){ closeBuy(); return; }
     if(pending.dailyGold && todayGoldEarned()<pending.dailyGold){ closeBuy(); return; }
+    if(weeklyLocked(pending)){ closeBuy(); return; }
     ensureAudio();
     const r=pending;
     S.gold-=r.price; S.purchasesToday+=1; S.totalPurchases+=1;
+    r.lastBought=Date.now();
     S.log.push({id:uid(),t:Date.now(),kind:"buy",name:r.name,icon:r.icon,gold:r.price});
     closeBuy();
     bumpGold();
